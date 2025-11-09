@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>9ம் வகுப்பு — கணித வினா வங்கி (10 மதிப்பெண்)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  body{font-family:"Noto Sans Tamil",sans-serif;background:#f9fafb;padding:20px;color:#222;text-align:center;}
+  h1{color:#006699;margin-bottom:10px;}
+  .info-box input{padding:8px;margin:5px;border-radius:6px;border:1px solid #aaa;width:80%;max-width:400px;}
+  .card{background:#fff;border-radius:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:20px;margin:auto;max-width:700px;text-align:left;}
+  button{background:#0084ff;border:none;color:#fff;padding:10px 20px;margin:10px;border-radius:8px;cursor:pointer;font-size:16px;}
+  button:hover{background:#006edc;}
+  .option-btn{display:block;width:100%;margin:8px 0;background:#e0f2ff;color:#111;text-align:left;padding:10px;border-radius:6px;border:1px solid #bde0ff;}
+  #scoreboard,#timer{font-size:18px;margin-bottom:8px;color:#333;}
+  .footer{margin-top:15px;color:#555;font-size:14px;}
+  .small{color:#555;font-size:13px;}
+</style>
+</head>
+
+<body>
+<h1>📘 9ம் வகுப்பு கணித தேர்வு (10 மதிப்பெண்)</h1>
+
+<div class="info-box" id="infoBox">
+  <h3>மாணவர் விவரங்கள்</h3>
+  <input type="text" id="studentName" placeholder="பெயர்"><br>
+  <input type="text" id="studentClass" placeholder="வகுப்பு மற்றும் பிரிவு (எ.கா., 9A)"><br>
+  <input type="text" id="studentSchool" placeholder="பள்ளி பெயர்"><br><br>
+  <button id="startBtn" onclick="startQuiz()">தொடங்கு ➡️</button>
+</div>
+
+<div id="quizArea" style="display:none;">
+  <div id="scoreboard">மதிப்பெண்: 0 / 10</div>
+  <div id="timer">⏱️ நேரம்: 60</div>
+  <div id="quiz" class="card"></div>
+
+  <div style="margin-top:8px;">
+    <button id="nextBtn" onclick="nextQuestion()">அடுத்த வினா ➡️</button>
+    <button id="downloadBtn" style="display:none;" onclick="downloadPDF()">📄 PDF பதிவிறக்க</button>
+  </div>
+</div>
+
+<script>
+const bank = [
+  { sentence:`50000 + 300 + 70 + 5 இன் சுருங்கிய வடிவம்.`, chapter:`எண்கள் மற்றும் இடமதிப்பு`, options:[`53750`,`50375`,`53075`,`57305`], answerText:`50375`, explanation:`50000 + 300 + 70 + 5 = 50375.` },
+  { sentence:`826 இன் விரிவாக்க வடிவம்?`, chapter:`எண்கள் மற்றும் இடமதிப்பு`, options:[`800 + 20 + 6`,`820 + 6`,`80 + 26`,`8 + 26`], answerText:`800 + 20 + 6`, explanation:`826 = 800 + 20 + 6.` },
+  { sentence:`1000 ml = ? liter`, chapter:`அளவுகள்`, options:[`1 L`,`100 L`,`0.1 L`,`10 L`], answerText:`1 L`, explanation:`1000 ml = 1 L.` }
+];
+
+let student={},questions=[],currentIndex=0,current=null,score=0,timer=null,timeLeft=60,answers=[];
+const TIME_PER_QUESTION=60;
+
+/* ---- Start Quiz ---- */
+function startQuiz(){
+  student.name=document.getElementById("studentName").value.trim();
+  student.class=document.getElementById("studentClass").value.trim();
+  student.school=document.getElementById("studentSchool").value.trim();
+  student.date=new Date().toLocaleDateString('ta-IN');
+
+  if(!student.name||!student.class||!student.school){
+    alert("❗ அனைத்தையும் நிரப்பவும் (பெயர், வகுப்பு, பள்ளி).");
+    return;
+  }
+  questions=bank.slice().sort(()=>0.5-Math.random()).slice(0,10);
+  document.getElementById("infoBox").style.display="none";
+  document.getElementById("quizArea").style.display="block";
+  score=0;currentIndex=0;answers=[];
+  nextQuestion();
+}
+
+/* ---- Next Question ---- */
+function nextQuestion(){
+  clearInterval(timer);
+  if(currentIndex>=questions.length){finishQuiz();return;}
+  current=questions[currentIndex];
+  timeLeft=TIME_PER_QUESTION;
+  document.getElementById("scoreboard").textContent=`மதிப்பெண்: ${score} / 10`;
+  document.getElementById("timer").textContent=`⏱️ நேரம்: ${timeLeft}`;
+  const quiz=document.getElementById("quiz");
+  quiz.innerHTML=`
+    <h3>${currentIndex+1}. ${current.sentence}</h3>
+    <p class="small"><b>அலகு:</b> ${current.chapter}</p>
+    ${current.options.map((o)=>`<button class="option-btn" data-opt="${o}" onclick="checkAnswer(this.dataset.opt)">${o}</button>`).join('')}
+    <p class="small">கால வரம்பு: ${TIME_PER_QUESTION} வினாடிகள்</p>`;
+  timer=setInterval(()=>{
+    timeLeft--;
+    document.getElementById("timer").textContent=`⏱️ நேரம்: ${timeLeft}`;
+    if(timeLeft<=0){
+      clearInterval(timer);
+      recordAnswer("நேரம் முடிந்தது",false);
+      alert("⏰ நேரம் முடிந்தது!\nசரியான பதில்: "+current.answerText);
+      currentIndex++;nextQuestion();
+    }
+  },1000);
+}
+
+/* ---- Check Answer ---- */
+function checkAnswer(option){
+  clearInterval(timer);
+  const correct=option===current.answerText;
+  if(correct)score++;
+  recordAnswer(option,correct);
+  alert((correct?"✅ சரியான பதில்!":"❌ தவறு!")+"\nவிளக்கம்: "+current.explanation);
+  currentIndex++;nextQuestion();
+}
+
+/* ---- Record ---- */
+function recordAnswer(sel,correct){
+  answers.push({question:current.sentence,yourAnswer:sel,correctAnswer:current.answerText,isCorrect:correct});
+}
+
+/* ---- Finish ---- */
+function finishQuiz(){
+  clearInterval(timer);
+  const pct=Math.round((score/10)*100);
+  const grade=gradeFromPercent(pct);
+  document.getElementById("quiz").innerHTML=`
+    <h2>🎉 பரீட்சை முடிந்தது!</h2>
+    <p>மதிப்பெண்: ${score} / 10</p>
+    <p>சதவீதம்: ${pct}%</p>
+    <p>மதிப்பீடு: ${grade}</p>`;
+  document.getElementById("nextBtn").style.display="none";
+  document.getElementById("downloadBtn").style.display="inline-block";
+}
+
+function gradeFromPercent(p){
+  if(p>=90)return"A+";
+  if(p>=80)return"A";
+  if(p>=70)return"B";
+  if(p>=60)return"C";
+  if(p>=50)return"D";
+  return"F";
+}
+
+/* ---- PDF ---- */
+async function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  doc.setFontSize(13);
+  let y=15;
+  doc.text("9ம் வகுப்பு — கணித (10 மதிப்பெண்) முடிவு",20,y);y+=10;
+  doc.text(`பெயர்: ${student.name}`,10,y);y+=6;
+  doc.text(`வகுப்பு/பிரிவு: ${student.class}`,10,y);y+=6;
+  doc.text(`பள்ளி: ${student.school}`,10,y);y+=6;
+  doc.text(`தேதி: ${student.date}`,10,y);y+=10;
+  answers.forEach((a,i)=>{
+    if(y>270){doc.addPage();y=15;}
+    doc.text(`${i+1}. ${a.question}`,10,y);y+=6;
+    doc.text(`   உங்கள் பதில்: ${a.yourAnswer}`,12,y);y+=5;
+    doc.text(`   சரியான பதில்: ${a.correctAnswer}`,12,y);y+=5;
+    doc.text(`   நிலை: ${(a.isCorrect?"சரி":"தவறு")}`,12,y);y+=7;
+  });
+  const pct=Math.round((score/10)*100);
+  const grade=gradeFromPercent(pct);
+  y+=6;
+  doc.text(`மொத்த மதிப்பெண்: ${score}/10`,10,y);y+=6;
+  doc.text(`சதவீதம்: ${pct}%`,10,y);y+=6;
+  doc.text(`மதிப்பீடு: ${grade}`,10,y);
+  doc.save(`${student.name||'student'}_Maths_Quiz.pdf`);
+}
+</script>
+
+<div class="footer">© 2025 Thiraviya Kumar | Class 9 Tamil Medium Maths Quiz</div>
+</body>
+</html>
