@@ -124,17 +124,22 @@ function finishQuiz(){
 }
 
 function downloadPDF(){
+  const doc = new jsPDF();
+
+doc.addFont("NotoSansTamil-Black.ttf", "NotoTamil", "normal");
+doc.setFont("NotoTamil");
+
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:"p",unit:"mm",format:"a4"});
   doc.setFont("Helvetica");
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   let y=15;
-  doc.text("9ம் வகுப்பு கணித (10 மதிப்பெண்) தேர்வு முடிவு",20,y);y+=8;
-  doc.setFontSize(11);
-  doc.text("பெயர்: "+student.name,10,y);y+=6;
-  doc.text("வகுப்பு/பிரிவு: "+student.class,10,y);y+=6;
-  doc.text("பள்ளி: "+student.school,10,y);y+=6;
-  doc.text("தேதி: "+student.date,10,y);y+=10;
+  doc.text("9ம் வகுப்பு கணித (10 மதிப்பெண்) தேர்வு முடிவு",20,y);y+=7;
+  doc.setFontSize(10);
+  doc.text("பெயர்: "+student.name,10,y);y+=5;
+  doc.text("வகுப்பு/பிரிவு: "+student.class,10,y);y+=5;
+  doc.text("பள்ளி: "+student.school,10,y);y+=5;
+  doc.text("தேதி: "+student.date,10,y);y+=8;
 
   answers.forEach((a,i)=>{
     if(y>270){doc.addPage();y=15;}
@@ -154,6 +159,6 @@ function downloadPDF(){
 }
 </script>
 
-<div class="footer">© 2025 Thiraviya Kumar | Tamil Maths Quiz System</div>
+<div class="footer">© 2025 Thiraviya Kumar | Class 9 Tamil Medium Maths Quiz</div>
 </body>
 </html>
