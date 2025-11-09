@@ -25,7 +25,6 @@
 
 <h1>📘 9ம் வகுப்பு கணித தேர்வு (10 மதிப்பெண்)</h1>
 
-<!-- STUDENT INFO -->
 <div class="info-box" id="infoBox">
   <h3>மாணவர் விவரங்கள்</h3>
   <input type="text" id="studentName" placeholder="பெயர்"><br>
@@ -35,7 +34,6 @@
   <button id="startBtn" onclick="startQuiz()">தொடங்கு ➡️</button>
 </div>
 
-<!-- QUIZ AREA -->
 <div id="quizArea" style="display:none;">
   <div id="scoreboard">மதிப்பெண்: 0 / 10</div>
   <div id="timer">⏱️ நேரம்: 60</div>
@@ -49,9 +47,11 @@
 </div>
 
 <script>
-
-/* ====== QUESTION BANK (Tamil) ====== */
+// ========= Question Bank =========
 const bank = [
+  { sentence:`50000 + 300 + 70 + 5 இன் சுருங்கிய வடிவம்.`, chapter:`எண்கள் மற்றும் இடமதிப்பு`, options:[`53750`,`50375`,`53075`,`57305`], answerText:`50375`, explanation:`50000 + 300 + 70 + 5 = 50375.` },
+  { sentence:`826 இன் விரிவாக்க வடிவம்?`, chapter:`எண்கள் மற்றும் இடமதிப்பு`, options:[`800 + 20 + 6`,`820 + 6`,`80 + 26`,`8 + 26`], answerText:`800 + 20 + 6`, explanation:`826 = 800 + 20 + 6.` },
+  { sentence:`1000 ml = ? liter`, chapter:`அளவுகள்`, options:[`1 L`,`100 L`,`0.1 L`,`10 L`], answerText:`1 L`, explanation:`1000 ml = 1 L.` }
   { sentence:`50000 + 300 + 70 + 5 இன் சுருங்கிய வடிவம்.`, chapter:`எண்கள் மற்றும் இடமதிப்பு`, options:[`53750`,`50375`,`53075`,`57305`], answerText:`50375`, explanation:`50000 + 300 + 70 + 5 = 50375.` },
   { sentence:`826 இன் விரிவாக்க வடிவம்?`, chapter:`எண்கள் மற்றும் இடமதிப்பு`, options:[`800 + 20 + 6`,`820 + 6`,`80 + 26`,`8 + 26`], answerText:`800 + 20 + 6`, explanation:`826 = 800 + 20 + 6.` },
   { sentence:`மிகச் சிறிய எட்டக்க எண் எது?`, chapter:`எண்கள் மற்றும் இடமதிப்பு`, options:[`10000000`,`9999999`,`1000000`,`11111111`], answerText:`10000000`, explanation:`1க்கு பின் 7 பூஜ்ஜியங்கள் = 10000000.` },
@@ -112,29 +112,145 @@ const bank = [
   { sentence:`LCM(9,12) = ?`, chapter:`LCM/HCF`, options:[`36`,`24`,`48`,`18`], answerText:`36`, explanation:`LCM=36.` },
   { sentence:`HCF(15,25) = ?`, chapter:`LCM/HCF`, options:[`5`,`10`,`15`,`25`], answerText:`5`, explanation:`GCD=5.` },
   { sentence:`Convert 1532/100 to decimal?`, chapter:`தசம எண்கள்`, options:[`15.32`,`1.532`,`153.2`,`1532`], answerText:`15.32`, explanation:`1532/100=15.32.` },
-  { sentence:`1000 ml = ? liter`, chapter:`அளவுகள்`, options:[`1 L`,`100 L`,`0.1 L`,`10 L`], answerText:`1 L`, explanation:`1000 ml = 1 L},
-  
-  /* (Rest questions omitted here for brevity—keep all from your bank) */
+
 ];
 
-/* ---- VARIABLES ---- */
-let student = {};
-let questions = [];
-let currentIndex = 0;
-let current = null;
-let score = 0;
-let timer = null;
-let timeLeft = 60;
-let answers = [];
-const TIME_PER_QUESTION = 60;
+let student={},questions=[],currentIndex=0,current=null,score=0,timer=null,timeLeft=60,answers=[];
+const TIME_PER_QUESTION=60;
 
-/* ---- LOAD TAMIL FONT ---- */
-let tamilFontB64 = null;
+/* Load Tamil font */
+let tamilFontB64=null;
+async function ensureTamilFontLoaded(){
+  if(tamilFontB64)return;
+  const fontUrl="https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Regular.ttf";
+  const res=await fetch(fontUrl);
+  const buf=await res.arrayBuffer();
+  const bytes=new Uint8Array(buf);
+  let binary="";for(let i=0;i<bytes.length;i++)binary+=String.fromCharCode(bytes[i]);
+  tamilFontB64=btoa(binary);
+}
 
-async function ensureTamilFontLoaded() {
-  if (tamilFontB64) return;
+/* ---- Start Quiz ---- */
+function startQuiz(){
+  student.name=document.getElementById("studentName").value.trim();
+  student.class=document.getElementById("studentClass").value.trim();
+  student.school=document.getElementById("studentSchool").value.trim();
+  student.date=document.getElementById("quizDate").value.trim();
+  if(!student.name||!student.class||!student.school||!student.date){
+    alert("❗ அனைத்தையும் நிரப்பவும் (பெயர், வகுப்பு, பள்ளி, தேதி).");
+    return;
+  }
+  questions=bank.slice().sort(()=>0.5-Math.random()).slice(0,10);
+  document.getElementById("infoBox").style.display="none";
+  document.getElementById("quizArea").style.display="block";
+  score=0;currentIndex=0;answers=[];
+  nextQuestion();
+}
 
-  const fontUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Black.ttf";
+/* ---- Next Question ---- */
+function nextQuestion(){
+  clearInterval(timer);
+  if(currentIndex>=questions.length){finishQuiz();return;}
+  current=questions[currentIndex];
+  timeLeft=TIME_PER_QUESTION;
+  document.getElementById("scoreboard").textContent=`மதிப்பெண்: ${score} / 10`;
+  document.getElementById("timer").textContent=`⏱️ நேரம்: ${timeLeft}`;
+  const quiz=document.getElementById("quiz");
+  quiz.innerHTML=`
+    <h3>${currentIndex+1}. ${current.sentence}</h3>
+    <p class="small"><b>அலகு:</b> ${current.chapter}</p>
+    ${current.options.map(o=>`<button class="option-btn" onclick="checkAnswer(\`${o}\`)">${o}</button>`).join('')}
+    <p class="small">கால வரம்பு: ${TIME_PER_QUESTION} வினாடிகள்</p>`;
+  timer=setInterval(()=>{
+    timeLeft--;
+    document.getElementById("timer").textContent=`⏱️ நேரம்: ${timeLeft}`;
+    if(timeLeft<=0){
+      clearInterval(timer);
+      recordAnswer("நேரம் முடிந்தது",false);
+      alert("⏰ நேரம் முடிந்தது!\nசரியான பதில்: "+current.answerText);
+      currentIndex++;nextQuestion();
+    }
+  },1000);
+}
+
+/* ---- Check Answer ---- */
+function checkAnswer(option){
+  clearInterval(timer);
+  const correct=option===current.answerText;
+  if(correct)score++;
+  recordAnswer(option,correct);
+  alert((correct?"✅ சரியான பதில்!":"❌ தவறு!")+"\nவிளக்கம்: "+current.explanation);
+  currentIndex++;nextQuestion();
+}
+
+/* ---- Record ---- */
+function recordAnswer(sel,correct){
+  answers.push({question:current.sentence,yourAnswer:sel,correctAnswer:current.answerText,isCorrect:correct});
+}
+
+/* ---- Finish ---- */
+function finishQuiz(){
+  clearInterval(timer);
+  const pct=Math.round((score/10)*100);
+  const grade=gradeFromPercent(pct);
+  document.getElementById("quiz").innerHTML=`
+    <h2>🎉 பரீட்சை முடிந்தது!</h2>
+    <p>மதிப்பெண்: ${score} / 10</p>
+    <p>சதவீதம்: ${pct}%</p>
+    <p>மதிப்பீடு: ${grade}</p>`;
+  document.getElementById("nextBtn").style.display="none";
+  document.getElementById("downloadBtn").style.display="inline-block";
+}
+
+/* ---- Helper ---- */
+function gradeFromPercent(p){
+  if(p>=90)return"A+";
+  if(p>=80)return"A";
+  if(p>=70)return"B";
+  if(p>=60)return"C";
+  if(p>=50)return"D";
+  return"F";
+}
+
+/* ---- PDF ---- */
+async function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  await ensureTamilFontLoaded();
+  const doc=new jsPDF();
+  doc.addFileToVFS("NotoSansTamil.ttf",tamilFontB64);
+  doc.addFont("NotoSansTamil.ttf","NotoSansTamil","normal");
+  doc.setFont("NotoSansTamil");
+  doc.setFontSize(13);
+  let y=15;
+  doc.text("9ம் வகுப்பு — கணித (10 மதிப்பெண்) முடிவு",20,y);y+=10;
+  doc.text(`பெயர்: ${student.name}`,10,y);y+=6;
+  doc.text(`வகுப்பு/பிரிவு: ${student.class}`,10,y);y+=6;
+  doc.text(`பள்ளி: ${student.school}`,10,y);y+=6;
+  doc.text(`தேதி: ${student.date}`,10,y);y+=10;
+  answers.forEach((a,i)=>{
+    if(y>270){doc.addPage();y=15;}
+    doc.text(`${i+1}. ${a.question}`,10,y);y+=6;
+    doc.text(`   உங்கள் பதில்: ${a.yourAnswer}`,12,y);y+=5;
+    doc.text(`   சரியன பதில்: ${a.correctAnswer}`,12,y);y+=5;
+    doc.text(`   நிலை: ${(a.isCorrect?"சரி":"தவறு")}`,12,y);y+=7;
+  });
+  const pct=Math.round((score/10)*100);
+  const grade=gradeFromPercent(pct);
+  y+=6;
+  doc.text(`மொத்த மதிப்பெண்: ${score}/10`,10,y);y+=6;
+  doc.text(`சதவீதம்: ${pct}%`,10,y);y+=6;
+  doc.text(`மதிப்பீடு: ${grade}`,10,y);
+  doc.save(`${student.name||'student'}_Maths_Quiz.pdf`);
+}
+ensureTamilFontLoaded().catch(()=>{});
+</script>
+
+<div class="footer">© 2025 Thiraviya Kumar | Class 9 Tamil Medium Maths Quiz</div>
+</body>
+  
+</html>
+
+    const fontUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Black.ttf";
   const res = await fetch(fontUrl);
   const buf = await res.arrayBuffer();
 
