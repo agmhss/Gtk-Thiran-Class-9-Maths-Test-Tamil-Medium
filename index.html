@@ -265,11 +265,11 @@ async function downloadPDF() {
   const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
 
   // Register & select the Tamil font
-  doc.addFileToVFS("NotoSansTamil-Regular.ttf", tamilFontB64);
+  doc.addFileToVFS("NotoSansTamil-Regular.ttf", "tamilFontB64");
   doc.addFont("NotoSansTamil-Regular.ttf", "NotoSansTamil", "normal");
+  doc.addFont("NotoSansTamil-VariableFont_wdth,wght.ttf", "NotoSansTamil");
   doc.setFont("NotoSansTamil");
-  doc.setFont("NotoSansTamil-VariableFont_wdth,wght.ttf", NotoSansTamil");
-
+  
   let y = 15;
   doc.setFontSize(14);
   doc.text("9ம் வகுப்பு — கணித (10 மதிப்பெண்) முடிவு", 20, y); y += 8;
