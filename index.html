@@ -39,12 +39,11 @@
   <div id="scoreboard">மதிப்பெண்: 0 / 10</div>
   <div id="timer">⏱️ நேரம்: 60</div>
   <div id="quiz" class="card"></div>
-  <div id="feedback"></div>
+  div id="feedback"></div
   <div style="margin-top:8px;">
     <button id="nextBtn" onclick="nextQuestion()">அடுத்த வினா ➡️</button>
     <button id="downloadBtn" style="display:none;" onclick="downloadPDF()">📄 PDF பதிவிறக்க</button>
   </div>
-</div>
 
 <script>
 /* ====== FULL QUESTION BANK (Tamil) ====== */
@@ -129,7 +128,7 @@ let tamilFontB64 = null;
 async function ensureTamilFontLoaded() {
   if (tamilFontB64) return;
   // NotoSansTamil Regular TTF from official googlefonts repo
-  const fontUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Regular.ttf";
+  const fontUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Black.ttf";
   const res = await fetch(fontUrl);
   const buf = await res.arrayBuffer();
   // Convert ArrayBuffer to Base64
@@ -250,8 +249,7 @@ function finishQuiz() {
     <p>மதிப்பெண்: ${score} / 10</p>
     <p>சதவீதம்: ${pct}%</p>
     <p>மதிப்பீடு: ${grade}</p>
-    <p class="small">PDF ஐ பதிவிறக்க கீழே உள்ள பட்டனை அழுத்தவும்.</p>
-  `;
+    <p class="small">PDF ஐ பதிவிறக்க கீழே உள்ள பட்டனை அழுத்தவும்.</p>;
 
   document.getElementById("nextBtn").style.display = "none";
   document.getElementById("downloadBtn").style.display = "inline-block";
@@ -266,8 +264,7 @@ async function downloadPDF() {
 
   // Register & select the Tamil font
   doc.addFileToVFS("NotoSansTamil-Regular.ttf", "tamilFontB64");
-  doc.addFont("NotoSansTamil-Regular.ttf", "NotoSansTamil", "normal");
-  doc.addFont("NotoSansTamil-VariableFont_wdth,wght.ttf", "NotoSansTamil");
+  doc.addFont("NotoSansTamil-Black.ttf", "NotoSansTamil");
   doc.setFont("NotoSansTamil");
   
   let y = 15;
